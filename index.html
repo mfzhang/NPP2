@@ -8,7 +8,7 @@
   <style type="text/css">
     body {
       margin-top: 1.0em;
-      background-color: #f1a30e;
+      background-color: #000;
       font-family: Helvetica, Arial, FreeSans, san-serif;
       color: #000000;
     }
@@ -16,12 +16,12 @@
       margin: 0 auto;
       width: 700px;
     }
-    h1 { font-size: 3.8em; color: #0e5cf1; margin-bottom: 3px; }
+    h1 { font-size: 3.8em; color: #333; margin-bottom: 3px; }
     h1 .small { font-size: 0.4em; }
     h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #0e5cf1; }
-    h3 { text-align: center; color: #0e5cf1; }
-    a { color: #0e5cf1; }
+    h2 { font-size: 1.5em; color: #fa1; }
+    h3 { text-align: center; color: #fa1; }
+    a { color: #fa1; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
     pre { background: #000; color: #fff; padding: 15px;}
@@ -54,9 +54,9 @@
 neural networks with millions of weights. During the training procedure,
 it makes heavy use of multi-core CPUs using several threads for propagating
 multiple training patterns in parallel. Relying on CBLAS calls where 
-appropriate, n++2 is also able to benefit of a CPU's SIMD-capabilities.
+appropriate, n++2 is also able to benefit of a CPU's SIMD-capabilities.</p>
 
-N++2 is able to speed-up training of "simple" multi-layer perceptrons with 
+<p>N++2 is able to speed-up training of "simple" multi-layer perceptrons with 
 only one or two hidden layers and a few hundred connections. But it's main
 purpose is to simulate huge neural networks with a number of hidden layers
 and up to millions of weights in a "deep learning" setting. For this 
@@ -67,9 +67,9 @@ fully connected layer types n++2 also comes with an implementation of sparse
 connection structures, including receptive fields and shared-weights. Thus,
 n++2 can also be used to simulate LeCun's convolutional neural networks and
 to combine these sparse techniques with deep learning and layer-wise 
-pretraining. 
+pretraining. </p>
 
-N++2 uses Martin Riedmiller's Resilient Propagation (RProp) for fast and 
+<p>N++2 uses Martin Riedmiller's Resilient Propagation (RProp) for fast and 
 reliable training of the neural networks. N++2 builds on Riedmiller's 
 original (non-parallel) implementation n++ and uses mainly the same interface 
 (API) to the "simulator core", although the internal structure of the neural 
@@ -80,61 +80,63 @@ original n++.</p>
 
     
       <h2>Dependencies</h2>
-      <p>POSIX Threads (pthread)
+      <p>POSIX Threads (pthread)<br />
 CBLAS</p>
     
 
     
       <h2>Install</h2>
-      <p>N++2 was tested on:
-- OS X Lion   (Xcode and cmake)
-- Ubuntu 10.04 LTS  (cmake)
+      <p>N++2 was tested on:<br />
+- OS X Lion   (Xcode and cmake)<br />
+- Ubuntu 10.04 LTS  (cmake)</p>
 
 
-Building n++2 using cmake:
+<h3>Building n++2 using cmake:</h3>
 
-Create a build-directory for storing configuration and temporary files:
-> mkdir build_cmake
+<p>Create a build-directory for storing configuration and temporary files:<br />
+<pre>> mkdir build_cmake</pre></p>
 
-Change to directory:
-> cd build_cmake
+<p>Change to directory:<br/>
+> cd build_cmake</p>
 
-Configure cmake and create make files (also builds the demos):
-> cmake -DDEMOS=ON ..
+<p>Configure cmake and create make files (also builds the demos):<br/>
+> cmake -DDEMOS=ON ..</p>
 
-Build and install n++2:
-> make
-> make install
+<p>Build and install n++2:<br/>
+<pre>> make
+> make install<pre></p>
 
 
-Create API-documentation from sources:
-> make doc
+<h3>Create API-documentation from sources:</h3>
+<pre>> make doc</pre>
 
-The documentation can be found in
-doc/api/html/
+</p>The documentation can be found in<br />
+<pre>doc/api/html/</pre>
 </p>
     
 
     
       <h2>License</h2>
       <p> Copyright (c) 2009-2011, Sascha Lange <sascha77@googlemail.com>, 
- All rights reserved.
+ All rights reserved.</p>
  
- Redistribution and use in source and binary forms, with or without 
- modification, are permitted provided that the following conditions are met:
+ <pRedistribution and use in source and binary forms, with or without 
+ modification, are permitted provided that the following conditions are met:</p>
  
- - Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+ <ul>
+ <li> Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.</li>
  
- - Redistributions in binary form must reproduce the above copyright notice,
+ <li> Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+   and/or other materials provided with the distribution.</li>
  
- - Neither the name of Sascha Lange Software nor the names of its 
+ <li> Neither the name of Sascha Lange Software nor the names of its 
    contributors may be used to endorse or promote products derived from this
-   software without specific prior written permission.
+   software without specific prior written permission.</li>
+</ul>
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+<p> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
@@ -149,18 +151,20 @@ doc/api/html/
 
     
       <h2>Authors</h2>
-      <p>slange (sascha77@googlemail.com)<br/>      </p>
+      <p>slange (sascha77@googlemail.com)
+<br/>      </p>
     
 
     
       <h2>Contact</h2>
-      <p>Sascha Lange (sascha77@googlemail.com)<br/>      </p>
+      <p>Sascha Lange (sascha77@googlemail.com)
+<br/>      </p>
     
 
     <h2>Download</h2>
     <p>
-      You can download this project in either
-      <a href="https://github.com/salange/NPP2/zipball/master">zip</a> or
+      You can download this project in either</br />
+      <a href="https://github.com/salange/NPP2/zipball/master">zip</a> or <br/>
       <a href="https://github.com/salange/NPP2/tarball/master">tar formats.
     </p>
     <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
