@@ -5,7 +5,7 @@ multiple training patterns in parallel. Relying on CBLAS calls where
 appropriate, n++2 is also able to benefit of a CPU's SIMD-capabilities.
 
 N++2 is able to speed-up training of "simple" multi-layer perceptrons with 
-only one or two hidden layers and a few hundred connections. But it's main
+only one or two hidden layers and a few hundred connections. But its main
 purpose is to simulate huge neural networks with a number of hidden layers
 and up to millions of weights in a "deep learning" setting. For this 
 purpose, n++2 offers additional facilities for constructing symmetric 
