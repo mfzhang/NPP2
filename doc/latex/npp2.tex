@@ -1,0 +1,897 @@
+%=============================================================================
+%
+%     Artikel
+%
+%=============================================================================
+
+%-------------------------------  PREAMBLE  ----------------------------------
+
+\documentclass{article}
+%\evensidemargin0.5cm
+\oddsidemargin0cm
+\textwidth15.5cm
+\topmargin0cm
+\textheight23cm
+%\headsep2cm
+\setlength{\parskip}{1ex plus0.5ex minus0.5ex} % Abstand zwischen zwei Absaetzen
+\parindent0cm % Einrueckung der ersten Zeile eines Absatzes
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+
+\newcommand{\eq}{\begin{equation}}
+\newcommand{\qe}{\end{equation}}
+
+%---------------------------------  DOCUMENT  --------------------------------
+\begin{document}
+
+\title{Dokumentation zu n++\\(Inklusive Vorwort von Sascha Lange zu N++2,\\der neuen, 2. Version)}
+\author{Martin Riedmiller}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{N++2 - neue, erweiterte Version von n++}
+
+Dieser neue Abschnitt der Dokumentation beschreibt kurz die Unterschiede von N++2 gegenüber der ``alten'' Version n++. 
+Der Rest des Dokuments wurde nicht verändert und bezieht sich auf die ursprüngliche Version, n++. Detaillierte, stets aktuelle Erklärungen zu N++2 können der API-Dokumentation entnommen werden.
+
+N++2 wurde in 2009 von Sascha Lange auf der Basis von Martin Riedmillers
+Simulator für neuronale Netze n++ entwickelt. 
+Grund der Neuimplementierung waren die Steigerung der
+Effizienz und die Unterstützung von neuen Konzepten des ``tiefen Lernens''.
+Gegenüber dem ursprünglichen n++ bietet der neue Simulator
+insbesondere folgende neue Funktionen:
+
+\begin{itemize}
+\item Datenparalle Berechnung von Aktivierungen und Fehlertermen mittels BLAS-Funktionen für vollvernetzte Schichten
+\item Aufgabenparallele Berechnung von Fehlern auf Mehrprozessorsystemen für batch-Verfahren, sowohl für vollvernetzte als auch ``dünn besetzte'' Verbindungsstrukturen
+\item Unterstützung des schichtenweisen Vortrainings tiefer Netze nach Hinton
+\item Zweidimensionale Anordnung in den Netzschichten (zur Bildverarbeitung)
+\item Unterstützung bei der Erzeugung von Netzen mit ``rezeptiven Feldern''
+\item Unterstützung von Shared-Weights nach LeCun
+\end{itemize}
+
+Es wurde versucht,
+die ursprüngliche API weitestgehend beizubehalten und nur dort wo nötig zu 
+erweitern. 
+An folgenden Stellen war es nötig, die Rückwärtskompatibilität zu n++ aufzugeben:
+\begin{description}
+\item[Vernetzungsstruktur] Es wurde eine explizite Repräsentation der Schichten des Netzes eingeführt. Gewichte, Fehlerterme, etc. werden je Schicht zusammenhängend in einer Matrix gespeichert. Diese Änderung war nötig, um ein effizienteres, schichtenweises propagieren mittels prozessorbeschleunigter Matrixoperatoren zu ermöglichen. Shortcutverbindungen sind NICHT erlaubt.
+\item[Netzformat] Das Dateiformat wurde geändert, um der schichtenweisen Vernetzung und insbesondere der Einführung von Shared-Weights Rechnung zu tragen. 
+\end{description}
+
+Der Simulatorkern realisiert nun folgende Funktionen:
+
+\begin{itemize}
+\item Aufbau der Netztopologie 
+\item Vorw\"arts propagieren eines Eingabemusters
+\item R\"uckw\"arts propagieren des Fehlervektors
+\item \"Anderung der Gewichte (lernen)
+\item Schichtenweises Vortraining symmetrischer Autoencodernetze
+\item Speichern/Laden von Netzen (inklusive neuer Stream-Operatoren)
+\item Unterstützung bei der Erzeugung komplexer, tiefer Netze (Netz-Generatoren)
+\end{itemize}
+
+\section{Verzeichnisstruktur}
+
+Das {\em n++} Verzeichnis unterteilt sich in folgende Unterverzeichnisse:
+
+\begin{tabbing}
+\hspace*{3cm}\= \kill
+
+{\em src}:\> Quellcode {\em n++, PatternSet++, aux}\\
+
+{\em include}:\> Include Headerdatei f\"ur Anwenderprogramme\\
+
+{\em lib}:\> Objektdateien {\em n++, PatternSet++, aux}\\
+
+{\em demo\_src}:\> Beispielprogramme {\em expl.c}\\
+
+{\em tools}:\> Werkzeuge\\
+
+{\em doc}:\> Dokumentation\\
+
+{\em examples}:\> Beispiele Netzbeschreibungen, Mustermengen\\
+
+\end{tabbing}
+
+\section{Der Simulatorkern n++.cc / n++.h}
+Der Simulatorkern ist als C++ Klasse implementiert.
+
+\subsection{Aufbau eines Netzes aus einem Anwendungsprogramm}
+
+\subsubsection{Aufbau der Netzschichten}
+
+Die Netztopologie wird durch die Prozedur 
+
+{\em create\_layers(int layers, int layer\_nodes[])} 
+
+aufgebaut, wobei {\em layers} die Anzahl der Schichten des Netzes
+(inkl.  Input/- und Outputlayer) angibt. Der Vektor layer\_nodes
+beschreibt die Anzahl der Neuronen pro Schicht, wobei {\em
+layer\_nodes[0]} die Anzahl der Eingabeneuronen, {\em layer\_nodes[1]}
+die Anzahl der Neuronen in der ersten Hidden-layer, etc... angibt.
+
+\subsubsection{Aufbau der Verbindungsstruktur (Gewichte)}
+
+Die Prozedur 
+
+{\em connect\_layers()} 
+
+baut eine Schicht-zu-Schicht
+Verbindungsstruktur auf (dies entspricht der typischen
+Verbindungsweise von Feed-forward Netzen). Zus\"atzlich erh\"alt jedes
+Neuron ein Biasgewicht.
+
+Die Prozedur 
+
+{\em connect\_shortcut()} 
+
+baut neben den
+Schicht-zu-Schicht Verbindungen und den Biasgewichten noch
+schicht\"ubergreifende Verbindungen auf ('Shortcut-Connections').
+
+Mit der Prozedur 
+
+{\em connect\_units(int to\_unit, int from\_unit, FTYPE
+value)} 
+
+kann gezielt eine Verbindung zu einem einzelnen Neuronen ({\em
+to\_unit}) aufgebaut werden. Die Verbindung erh\"alt das Gewicht {\em
+value}.
+
+Die Prozedur
+
+{\em void init\_weights(int mode, FTYPE range)}
+
+initialisiert die vorhandenen Netzgewichte und Biase mit Zufallswerten
+im Bereich $[-range,+range]$. Falls {\em mode = 1} werden die Biase
+nicht initialisiert, sondern auf 0.0 gesetzt.
+
+
+Mit
+
+{\em  void set\_seed(long seed\_no)}
+
+kann gegebenenfalls vorher der Startpunkt des Zufallszahlengenerators
+festgelegt werden (um z.B. immer die gleiche Folge von Zufallsinitialisierungen
+zu erzeugen).
+
+
+\subsubsection{Setzen der Aktivierungsfunktionen}
+Jedem Neuron kann eine eigene Aktivierungsfunktion zugewiesen werden,
+die aus der gewichteten Summe der ankommenden Gewichte eine 
+Aktivierung und damit die Ausgabe des Neurons berechnet.
+Die Funktion 
+
+{\em set\_unit\_act\_f(int unit\_no,int act\_id)} 
+
+weist dem 
+Neuron {\em unit\_no} die Aktivierungsfunktion {\em act\_id} zu.
+Im Moment stehen die Aktivierungsfunktionen {\em LOGISTIC (0)},
+{\em SYMMETRIC (1)} und {\em IDENTI\"AT (LINEAR) (2)} zur Verf\"ugung.
+
+Die Funktion 
+
+{\em set\_layer\_act\_f(int layer\_no,int act\_id)}
+
+weist einer ganzen Schicht {\em layer\_no} die Aktivierungsfunktion
+{\em act\_id} zu.
+
+\subsection{Aufbau eines Netzes mittels einer Netzbeschreibungssprache \label{aufbau}}
+
+{\em n++} stellt einen komfortablen Mechanismus zum Aufbau einer
+Netztopologie mittels einer Beschreibungssprache zur Verf\"ugung. Die durch
+{\em filename} bezeichnete Datei wird mittels der Prozedur
+
+{\em load\_net(char filename[])}
+
+eingelesen. {\em n++} erkennt, ob es sich um die Beschreibung der
+Topologie und der Gewichte eines bereits trainierten Netzes handelt
+oder ob die Datei Kommandos zum Aufbau einer neuen Netzstruktur
+enth\"alt. Damit k\"onnen neue Netztopologien sehr einfach 
+definiert werden. Die Netzbeschreibungssprache umfa"st im
+wesentlichen die Aufbau-Kommandos der 'C'-Schnittstelle:
+
+{\em topology: \flq input\frq \flq hidden 1\frq ... \flq hidden n\frq \flq output\frq} - 
+Definition der Schichten und der Anzahl Neuronen eines Netzes 
+(entspricht {\em create\_layeres()}
+
+{\em connect\_layers} -
+Aufbau von Schicht-zu-Schicht Verbindungen
+
+{\em connect\_shortcut} -
+Aufbau von Schicht-zu-Schicht + Shortcut Verbindungen
+
+{\em set\_unit\_act\_f \flq unit\_no\frq \flq act\_id\frq} -
+Setzen der Aktivierungsfunktion bei Neuron {\em unit\_no}
+
+{\em set\_layer\_act\_f \flq layer\_no\frq \flq act\_id\frq} -
+Setzen der Aktivierungsfunktion f\"ur eine ganze Schicht {\em layer\_no}
+
+{\em init\_weights \flq mode\frq \flq range\frq} -
+Initialisieren der Gewichte. {\em Mode = 1} bewirkt, da"s Biasgewichte nicht
+zuf\"allig initialisiert, sondern auf 0.0 gesetzt werden.
+
+{\em set\_update\_f \flq update\_function\frq \flq parameter 1\frq .. 
+\flq parameter n\frq} -
+Setzen der Gewichts\"anderungsfunktion mit den entsprechenden
+Parametern.
+
+{\em scale\_input \flq position\frq \flq scale\_mode\frq \flq parameter 1\frq \flq parameter 2\frq } -
+Skalierung des durch {\em position} festgelegten Eingabewertes (Z\"ahlung beginnt
+bei 1!) unter Anwendung der Skalierungsart {\em scale\_mode} mit den 
+Parametern {\em parameter 1, parameter 2} (Skalierung s. \ref{skalierung}).
+
+{\em scale\_output \flq position\frq \flq scale\_mode\frq \flq parameter 1\frq \flq parameter 2\frq } -
+Skalierung des durch {\em position} festgelegten Ausgabewertes (Z\"ahlung beginnt
+bei 1!) unter Anwendung der Skalierungsart {\em scale\_mode} mit den 
+Parametern {\em parameter 1, parameter 2}  (Skalierung s. \ref{skalierung}).
+
+Beispiel (demo1.net):
+
+\begin{verbatim}
+
+topology: 2 4 3
+connect_shortcut
+set_layer_act_f 2 2
+init_weights 0 .5
+set_update_f 1 0.3 1.0
+
+#scaling
+input_scale 1 0 .5 2     # Scale first input unit, mode 0, parameter .5, 2
+input_scale 4 2 .4 .6    # Scale fourth input unit, mode 2, parameter .4, .6
+output_scale 2 1 .4 .4   # Scale fourth input unit, mode 2, parameter .4, .6
+\end{verbatim}
+
+
+\subsection{Transformation von Netzein- und ausgaben \label{skalierung}}
+
+\subsubsection{Forward-Pass} 
+
+Bei der Definition einer Netzstruktur (s. \ref{aufbau})
+besteht die M\"oglichkeit,
+einzelne Netzein- und ausgabewerte zu skalieren. 
+Beim Aufruf der Prozedur {\em forward\_pass} werden entsprechend der
+Spezifikation zuerst die Eingabewerte skaliert, die transformierten
+Werte durchs Netz propagiert, und die erzielte Netzausgabe
+gegebenfalls wiederum transformiert.
+Die Spezifikation der Transformation geschieht innerhalb einer 
+Netzdefinition mit dem Schl\"usselwort {\em scale\_input} bzw.
+ {\em scale\_output}. Die Syntax ist f\"ur beide Schl\"usselw\"orter
+dieselbe:
+
+{\em scale\_input \flq position\frq \flq scale\_mode\frq \flq parameter 1\frq \flq parameter 2\frq }
+
+Hierbei gibt {\em position} die Position des zu skalierenden Werts im Eingabevektor
+an, {\bf wobei die Z\"ahlung bei 1 beginnt!}. {\em scale\_mode} gibt die Art
+der durchzuf\"uhrenden Transformation und {\em parameter 1} bzw. {\em parameter 2}
+die Parameter an. Es stehen folgende Transformationen f\"ur die
+Skalierung des Eingabe- (Ausgabe-)werts $x \rightarrow x^*$ zur Verf\"ugung:
+
+\begin{itemize}
+
+\item 0: Symmetrische Skalierung
+
+\eq x^* = \left\{ \begin{array}{r@{\quad,\quad}l}
+                   x * parameter 1 & x > 0 \\
+                   x * parameter 2 & x \leq 0
+                   \end{array} \right.\qe
+
+\item 1: Lineare Skalierung
+
+\eq x^* = parameter 1 * x + parameter 2 \qe
+
+\item 2: Bin\"are Skalierung $\rightarrow [0,1]$
+\eq x^* = \left\{ \begin{array}{r@{\quad,\quad}l}
+                   0 & x \leq parameter 1 \\
+                   1 & x \ge parameter 2
+                   \end{array} \right.\qe
+
+\item 3: Bin\"are symmetrische Skalierung $\rightarrow [-1,1]$
+\eq x^* = \left\{ \begin{array}{r@{\quad,\quad}l}
+                   -1 & x \leq parameter 1 \\
+                   1 & x \ge parameter 2
+                   \end{array} \right.\qe
+
+
+
+
+
+\end{itemize}
+
+
+\subsubsection{Backward-Pass} 
+
+Beim Aufruf des R\"uckw\"arts-Propagieren ({\em backward\_pass})
+wird die Skalierung bei den Skalierungsmodi 0 (Symmetrische Skalierung)
+und 1 (Lineare Skalierung) ber\"ucksichtigt. Und zwar berechnet
+sich die Ableitung des skalierten Werts $x^*$ nach dem unskalierten
+Wert $x$ wie folgt:
+
+\begin{itemize}
+\item 0: Symmetrische Skalierung
+
+\eq \frac{d x^*}{x} = \left\{ \begin{array}{r@{\quad,\quad}l}
+                   parameter 1 & x >= 0 \\
+                   parameter 2 & x < 0
+                   \end{array} \right.\qe
+
+\item 1: Lineare Skalierung
+
+\eq \frac{d x^*}{x} = parameter 1 \qe
+
+\end{itemize}
+
+Dabei wird sowohl die Skalierung der Eingabewerte als auch die
+Skalierung der Ausgabewerte ber\"ucksichtigt.
+
+\subsection{Interne Datenstruktur}
+Im Simulator wird das Netz als lineare Liste von Neuronen verwaltet.
+Neuron 0 bezeichnet das Bias Neuron mit konstanter Ausgabe 1.
+Neuron 1 bis i sind die Neuronen der Eingabeschicht, Neuron i+1 bis
+(i+h) sind die Neuronen der Hidden layer(s), Neuron (i+h+1) bis (i+h+o)
+bezeichnen die Neuronen der Ausgabeschicht  (i = Anzahl der
+Eingabeneuronen, h = Anzahl der Hiddenneuronen, o = Anzahl der
+Ausgabeneuronen).
+Der Benutzer ist damit nur insofern konfrontiert, wenn einzelnen
+Neuronen im Netz eine bestimmte Aktivierungsfunktion zugewiesen
+werden soll, bzw. wenn zwei Neuronen des Netzes gezielt miteinander
+verbunden werden sollen.
+
+Die Z\"ahlung der Schichten ({\em layers}) des Netzes beginnt bei
+{\em layer} 0, der Eingabeschicht. {\em layer} 1 bezeichnet also
+die 1. Hiddenlayer und so weiter.
+
+\subsection{Propagieren durchs Netz}
+
+Um das {\em Vorw\"artspropagieren} eines Eingabevektors durch ein Netz zu 
+bewirken, wird die Prozedur
+
+{\em forward\_pass(FTYPE *in\_vec, FTYPE *out\_vec)}
+
+aufgerufen. Der Vektor {\em in\_vec[]} enth\"alt die 
+Eingabewerte. Falls der Vektor gr\"o"ser ist als die Anzahl der
+Input-Units werden nur die ersten i Werte verwendet. 
+Als Ergebnis des Prozeduraufrufs werden im o-stelligen Vektor
+{\em out\_vec[]} die Ausgabewerte der Neuronen der Ausgabeschicht \"ubergeben.
+Dabei werden gegebenenfalls Skalierung der Eingabe- bzw. Ausgabewerte
+gem\"a"s den Angaben des Benutzers vorgenommen.
+
+
+Die Prozedur 
+
+{\em backward\_pass(FTYPE *dedout, FTYPE *dedin)}
+
+f\"uhrt ein 'r\"uckw\"arts propagieren' der Fehlerwerte der
+Ausgabeschicht und dabei das Berechnen der partiellen Ableitungen des
+Fehlers nach den Gewichten, $\dEdw$, durch.  
+Die eigentliche Durchf\"uhrung der Propagierung wird
+von der aktuell ausgew\"ahlten R\"uckpropagierungsfunktion
+ausgef\"uhrt.
+
+In der aktuellen Implementierung ist diese der herk\"ommliche 
+Backpropagation-Algorithmus. Im Vektor {\em dedout[]} werden
+die Ableitungen der Ausgabeneuronen nach dem Fehler, $\dEdo$,
+\"ubergeben (typischerweise gilt $\dEdo = - (t_i - o_i)$).
+Falls f\"ur ein Ausgabeneuron eine differenzierbare
+Skalierung angegeben ist, wird der Wert gem\"a"s obiger
+Vorschrift differenziert (s. \ref{skalierung}).
+Diese Werte werden durch das Netz propagiert, die partiellen
+Ableitungen berechnet und diese werden solange aufsummiert, bis die
+eigentliche Lernfunktion (s. {\em update\_weights()}) aufgerufen wird.
+Als Besonderheit enth\"alt der Vektor {\em dedin[]} die
+Ableitungen des Ausgabefehlers nach den Eingaben. Dies kann z.B.
+dazu ben\"utzt werden, um Fehler durch ein Netz durchzupropagieren
+(wird im Bereich 'Neuro Control' verwendet).
+
+Die Prozedur 
+
+{\em backward\_pass\_light(FTYPE *dedout, FTYPE *dedin)}
+
+berechnet (\bf nur) die Ableitungen nach der Eingabe, d.h. die 
+Ableitung nach den Gewichten wird {\bf nicht} berechnet. Dies ist
+dann n\"utzlich, wenn man nur die Ableitung der Eingabe nach
+der Netzausgabe berechnen will, die (evtl. bislang berechneten) 
+Gewichtsgradienten aber nicht ver\"andern darf.
+
+
+
+\subsection{Lernen der Gewichte - der 'Gewichts-update'}
+Die Prozedur 
+
+{\em   void update\_weights()} 
+
+ruft die aktuelle Lernfunktion zur \"Anderung der Gewichte auf. Je
+nach H\"aufigkeit des Aufrufs kann somit ein {\em learning by pattern}
+(Aufruf nach jedem {\em backward\_pass()}), ein {\em learning by block}
+(Aufruf am Ende einer kompletten Mustermenge), oder eine Mischform davon
+erzielt werden.
+
+Die Update-Funktion berechnet die jeweilige Gewichts\"anderung als
+Funktion des im {\em backward\_pass} berechneten (ggf. aufsummierten)
+Gradienten. Nach der \"Anderung wird der Gradient auf 0 gesetzt.
+Defaultm\"a"sig ist die BP-Lernfunktion eingestellt.
+
+{\bf Hinweis:} Die Prozedur {\em update\_weights()} wird ohne
+Parameter aufgerufen. Die Einstellung der Lernparameter erfolgt
+gleichzeitig mit der Wahl der Lernfunktion mittels
+
+{\em void set\_update\_f(int typ,float *params)}. 
+
+Im Parametervektor {\em params[]} werden
+die f\"ur die jeweilige Lernfunktion g\"ultigen Parameter
+\"ubergeben. 
+
+\subsubsection{Backpropagation (BP (0))}
+Auswahl mit 
+
+{\em set\_update\_f(0,params)} oder {\em set\_update\_f(BP,params)}.
+
+Parameter[0]: Lernrate
+
+Parameter[1]: Momentum
+
+Parameter[2]: Weight-decay
+
+\subsubsection{Rprop (RPROP (1))}
+Auswahl mit 
+
+{\em set\_update\_f(1,params)} oder {\em set\_update\_f(RPROP,params)}.
+
+Parameter[0]: $\triangle_0$
+
+Parameter[1]: $\triangle_{max}$
+
+Parameter[2]: Weight-decay
+
+{\bf Achtung:} Der weight-decay Parameter bei Rprop in der n++-Version
+unterscheidet sich {\em fundamental} von der SNNS-Implementierung (beim
+SNNS gibt er den Exponent an und wird bei jedem Propagieren aufaddiert).
+In der n++-Version wird der weight-decay erst unmittelbar vor dem
+Gewichtsupdate angewendet. Umrechnung (ohne Gew\"ahr) f\"ur SNNS-
+weight-decay Parameter
+$\alpha$ in n++-Parameter $\lambda$:
+
+$\lambda \approx 10^{-\alpha} * Anzahl Muster$
+
+\subsection{Sichern und Laden von Netzen}
+Das Speichern eines Netzes, d.h. die Topologie, Aktivierungsfunktionen und
+Gewichtswerte, wird von der Prozedur
+
+{\em save\_net(char filename[])}
+
+ausgef\"uhrt, wobei {\em filename} den Namen der Datei angibt.
+Das Laden eines Netzes von einer Datei geschieht analog mit
+
+{\em load\_net(char filename[])}.
+
+Mit 
+
+{\em print\_net()} 
+
+kann die aktuelle Netztopologie auf {\em stdout} ausgegeben werden.
+
+\subsection{\"Offentliche Parameter (Public variables)}
+Nach Aufbau der Netztopologie oder Einlesen eines Netzes aus einer
+Datei, steht folgende Topologiebeschreibung in Form eines
+{\em Records} zur Verf\"ugung:
+
+\begin{verbatim}
+struct topo_typ{
+  int layer_count;  /* number of layers */
+  int in_count;	    /* number of input units */
+  int out_count;    /* number of output units */
+  int hidden_count; /* number of hidden units */
+  int unit_count;   /* total number of  units */
+} topo_data;
+
+\end{verbatim}
+
+Desweiteren werden zur Kommunikation mit dem Netz zwei Vektoren
+zur Verf\"ugung gestellt, und zwar {\em in\_vec}, dessen Gr\"o"se
+der Gr\"o"se der Eingabeschicht entspricht, und {\em out\_vec},
+mit derselben Gr\"o"se wie die Ausgabeschicht. Man kann sie
+beispielsweise sinnvoll zur Propagierung von Eingabevektoren
+einsetzen.
+
+{\bf Achtung:} Die Vektoren {\em in\_vec} und {\em out\_vec} dienen nur
+als Hilfestellung f\"ur den Benutzer; weder m\"ussen sie eingesetzt
+werden, noch werden ihre Werte beim Vorw\"arts-
+/R\"uckw\"artspropagieren automatisch gesetzt.
+
+\subsection{Temporal Difference (TD) Learning}
+
+Das Temporal Difference Lernverfahren ist ein Verfahren zur
+Minimierung des Bewertungsfehlers aufeinanderfolgender Zust\"ande in
+Sequenzen.  Der Fehler, der zum Zeitpunkt t gemacht wird ({\em
+td\_error(t)}), kann erst zum Zeitpunkt t+1 berechnet werden, wenn die
+Bewertung des Folgezustands t+1 bekannt ist.  (Literatur: Sutton,
+1988, {\sl 'Learning by Temporal Differences'}, Machine Learning,
+1988). Damit ergibt sich folgendes Vorgehen:
+
+{\bf Anfangszustand der Sequenz $t_0$}
+\begin{itemize}
+\item Initalisieren der Werte: {\em TD\_init\_sequence()}
+\item Berechnen der Bewertung: {\em forward\_pass(netin[],\&Output($t_0$))}
+\item R\"uckpropagieren zur Berechnung von 
+	$\frac{\partial O}{\partial w_{ij}(t_0)}$: {\em TD\_backward\_pass(0,$\lambda$)}
+\end{itemize}
+
+{\bf Zwischenzust\"ande der Sequenz $t_1,..,t,..,t_{n-1}$}
+\begin{itemize}
+\item Berechnen der Bewertung: {\em forward\_pass(netin[],\&Output(t))}
+\item Berechnen des $td\_error(t-1) := Output(t-1) - (r(t) + \gamma Output(t)) $
+\item R\"uckpropagieren: {\em TD\_backward\_pass(td\_error(t-1),$\lambda$)}
+\item Ggf. Gewichts\"anderung: {\em update\_weights()} \newline Neuberechnung der
+	Netzausgabe {\em forward\_pass(netin[],\&Output(t))}
+\end{itemize}
+
+{\bf Endzustand $t_n$}
+\begin{itemize}
+\item Berechnen der Bewertung: {\em forward\_pass(netin[],\&Output($t_n$)}
+\item Berechnen des $td\_error(t_{n-1}) := Output(t_{n-1}) - (r(t_n) 
+	+ \gamma Output(t_n)) $
+\item R\"uckpropagieren: {\em TD\_backward\_pass(td\_error($t_{n-1})$,$\lambda$}
+\item Ggf. Gewichts\"anderung: {\em update\_weights()} \newline Neuberechnung der
+	Netzausgabe {\em forward\_pass(netin[],\&Output(t))}
+\item Berechnen des $td\_error(t_{n}) := Output(t_{n}) - R(t_n)$
+\item R\"uckpropagieren: {\em TD\_backward\_pass(td\_error($t_{n-1})$,$\lambda$)}
+\item Gewichts\"anderung: {\em update\_weights()}
+\end{itemize}
+
+{\bf Besonderheiten}
+\begin{itemize}
+\item Vergessen von Sequenzen: {\em clear\_derivatives()} l\"oscht den
+summierten Gradienten seit dem letzten Gewichtsupdate. Sinn: Schlechte
+Sequenzen k\"onnen vergessen werden.
+\item Betonen von Sequenzen: {\em  multiply\_derivatives(factor)}. Multipliziert
+den summierten Gradient mit dem angegebenen Faktor. Sinn: Betonen oder 
+Abschw\"achen einzelner Sequenzen. F\"ur {\em factor = 0} ergibt sich 
+{\em clear\_derivatives()}
+\end{itemize}
+
+\subsubsection{Implementierung des TD-Verfahrens}
+
+Beim R\"uckw\"artspropagieren wird zum einen die Ableitung des
+Gewichts nach der aktuellen Ausgabe $Output(t)$,
+$\frac{\partial Output}{w_{ij}}(t)$, berechnet, und daraus der
+zeitlich 'verschmierte' Wert 
+
+\[\frac{\partial O}{w_{ij}}(t) = \lambda \frac{\partial O}{w_{ij}} (t-1) + 
+	\frac{\partial Output}{w_{ij}}(t)
+	= \sum_{k=1}^t \lambda^{t-k} * \frac{\partial Output}{w_{ij}}(k)\]
+
+Der f\"ur den Gewichtsupdate benutzte 'Gradient' $\dEdw(t)$ berechnet sich
+wie folgt:
+
+\[\dEdw(t-1) = td\_error(t-1) * \frac{\partial O}{w_{ij}}(t-1)\]
+
+Wie beim herk\"ommlichen R\"uckw\"artspropagieren wird der Gradient solange
+aufsummiert, bis eine Gewichts\"anderung mittels des Aufrufs
+{\em update\_weights()} vorgenommen wird.
+
+
+\section{Benutzung des Simulatorkerns}
+
+Der Simulatorkern wird als Objektdatei zum Anwendungsprogramm dazugebunden
+(z.B.{\em g++ -o myprog myprog.o net.o -lm)}, die Header-Datei {\em net.h}
+per include im Programmtext eingebunden ({\em \#include''net.h''}).
+
+
+\subsection{Beispiel (exp1.c) - einfaches dreischichtiges Netz}
+{\small
+\begin{verbatim}
+#include <stdio.h>
+#include "n++.h"
+//// bindet die n++ Headerdatei ein
+
+#define INPUTS 2
+//// 2 Eingabeneuronen
+
+#define OUTPUTS 3
+//// 3 Ausgabeneuronen
+
+#define LAYERS 3
+//// 3 Schichten (incl. Ein- u. Ausgabeschicht)
+
+Net net1;
+//// net1 ist vom Typ Net
+
+int no_layers = LAYERS;
+//// no_layers: Anzahl der Schichten
+
+int layer_nodes[LAYERS]={INPUTS,4,OUTPUTS};
+//// Vektor layer_nodes: Anzahl der Neuronen pro Schicht
+
+float uparams[5];                          
+//// 5-dimensionaler Parametervektor fuer Lernfunktion
+
+FTYPE in_vec[INPUTS], out_vec[OUTPUTS];    
+//// Definition der Ein- u. Ausgabevektoren
+
+int main( int argc, char *argv[] )
+{
+  int i;
+
+  net1.create_layers(no_layers,layer_nodes); 
+//// erzeugen des Netzes
+
+  net1.connect_layers();                     
+//// Jedes Neuron wird mit allen Neuronen der benachbarten Schichten verbunden
+
+  net1.init_weights(0,.5);                   
+//// Die Gewichte mit Zufallswerten zwischen 0 und 0.5 initialisiert
+
+  uparams[0] = 0.1;                           
+  uparams[1] = 0.9;                           
+//// Setzen der Lernparameter
+
+  net1.set_update_f(BP,uparams);             
+//// waehlt Backpropagation als Lernfunktion aus
+
+  for(i=0;i<INPUTS;i++)                       
+    in_vec[i] = 0.5;
+//// setzt alle Eingaben auf 0.5
+
+  net1.forward_pass(in_vec,out_vec);         
+//// berechnet Ausgabe
+
+  for(i=0;i<OUTPUTS;i++)
+    printf("%f  ",out_vec[i]);
+//// Ausgabe steht in out_vec[]
+
+  printf("\n");
+  printf("Number of input units: %d\n",net1.topo_data.in_count);
+  printf("Number of hidden units: %d\n",net1.topo_data.hidden_count);
+  printf("Number of output units: %d\n",net1.topo_data.out_count);
+  printf("Total Number of units: %d\n",net1.topo_data.unit_count);
+//// schreibt Ausgabe
+}
+
+\end{verbatim}
+}
+
+\section{Verwaltung von Mustermengen - PatternSet.cc / PatternSet.h}
+
+Zur Verwaltung von Trainings-/Testmustern steht die Klassen {\em
+PatternSet} zur Verf\"ugung. Jedem Trainingsset kann eine eigene
+Instanz dieser Klasse zur Verf\"ugung gestellt werden.
+
+\subsection{Laden einer Mustermenge}
+Die Prozedur 
+
+{\em   int load\_pattern(char filename[])}
+
+l\"adt eine Trainingsmustermenge von der durch {\em filename}
+bezeichneten Datei. Falls ein Fehler beim Laden auftritt, wird
+ein entsprechender Fehlerwert zurueckgegeben, ansonsten 0.
+Das lesbare Fileformat ist dem 
+SNNS-Patternformat \"ahnlich, es k\"onnen auch SNNS-Dateien
+eingelesen werden. Kommentarzeilen beginnen mit '\%'.
+Wichtig ist das Leerzeichen vor dem Doppelpunkt im Kopf des
+Patternfiles!
+
+{\small
+\begin{verbatim}
+<beliebig viele Zeilen mit beliebigem Text bis zum ersten 'No.'>
+No. of patterns     : <Anzahl der Muster>           /* ACHTUNG: Leerzeichen vor ':' */
+No. of input units  : <Anzahl der Eingabneuronen>   /* ACHTUNG: Leerzeichen vor ':' */
+No. of output units : <Anzahl der Ausgabeneuronen>  /* ACHTUNG: Leerzeichen vor ':' */
+
+<beliebig viele Leer- oder Kommentarzeilen bis zur ersten Ziffer>
+
+#Mustername
+<beliebig viele Leer- oder Kommentarzeilen bis zur ersten Ziffer>
+1.3 2.3 0 0 0 2.     % Eingabemuster; Keine Leerzeile zum Zielmuster!!!
+0 1                  % Zielmuster
+
+\end{verbatim}
+
+Die im Kopf angegebenen Gr\"o "sen 'No. of input units' bestimmt
+die Anzahl der eingelesenen Werte des Eingabemusters. Falls die
+Zahl 'No. of input units' gr\"o"ser ist als die Anzahl der Werte pro
+Zeile, wird der Rest des Eingabe-Vektors mit Nullen aufgef\"ullt.
+Falls mehr Zahlen in der Zeile stehen als die Gr\o"se des Eingabe-Vektors,
+werden die \"uberz\"ahligen Ziffern ignoriert.
+Dasselbe gilt analog f\"ur die Anzahl der Ausgabe-Units.
+
+Falls {\em No. of output units} auf
+0 gesetzt ist, werden nur Eingabemuster gelesen.
+
+Die Angabe der Anzahl vorhandener Muster (No. of patterns) in der Kopfzeile
+wird ignoriert. Sie ist nur aus kompatibilit\"atsgr\"unden zum SNNS
+enthalten. Die Anzahl der Muster einer Mustermenge {\em pattern\_count}
+(s.u) h\"angt allein von der in Musterdatei gefundenen Anzahl an 
+Trainingsmustern ab. Diese Anzahl wird beim Einlesen der Musterdatei
+automatisch festgestellt.
+
+\subsection{\"Offentliche Variablen}
+
+Folgende Variablen werden nach Einlesen der Musterdatei auf
+die entsprechenden Werte gesetzt:
+
+{\em  int pattern\_count}: Anzahl der eingelesenen Muster
+
+{\em input\_count}: Anzahl der Eingabewerte pro Muster
+
+{\em target\_count}: Anzahl der Ausgabewerte pro Muster
+
+Damit ist es zum Beispiel m\"oglich, in Zusammenhang mit dem
+Neurokernel ein Netz in Abh\"angigkeit der eingelesenen Anzahl von
+Eingabeneuronen automatisch, d.h. zur Laufzeit zu generieren.
+
+\"Uber die Matrix input[0..{\em pattern\_count}-1][0..{\em input\_count}-1]
+kann auf ein bestimmtes Eingabemuster bzw. auf den Wert eines
+bestimmten Eingabeneurons f\"ur ein bestimmtes Eingabemuster zugegriffen
+werden. Analog gilt dies f\"ur die Matrix der Ziel-(Target)werte
+{\em target[][]}.
+
+Die Prozedur
+
+{\em print\_pattern()} 
+
+gibt die eingelesenen Muster auf {\em stdout} aus.
+
+\subsection{Beispiel (expl2.c)}
+{\small
+\begin{verbatim}
+#include <stdio.h>
+#include "n++.h"
+//// bindet die n++ Headerdatei ein
+
+#include "PatternSet.h"
+//// bindet die PatternSet Headerdatei ein
+
+#define LAYERS 3
+//// 3 schichtiges Netz (incl. Ein- u. Ausgabeschicht)
+
+#define HIDDEN_COUNT 5
+//// 5 Hidden Units
+
+int topology[LAYERS]; 
+//// topology[]: Vektor, in dem die Anzahl der Neuronen der Schichten stehen.
+
+float uparams[MAX_PARAMS]={0.0,0.0,0.0,0.0,0.0}; 
+//// 5-dimensionaler Lernparametervektor
+
+FTYPE *in_vec,*out_vec; 
+//// Ein- u. Ausgabevektoren
+               
+Net net1;
+PatternSet pat1;
+//// Netz net1, Muster pat1
+
+void create_net(Net *net,int inputs, int hidden, int outputs)
+//// erzeugt Netz
+{
+  topology[0] = inputs; topology[1] = hidden; topology[2] = outputs; 
+//// Anzahl der Neuronen in Input-,Hidden- und Output Unit
+
+  net->create_layers(LAYERS,topology); 
+//// erzeugt Schichten
+ 
+  net->connect_layers();   
+//// verbindet Schichten
+
+  net->init_weights(0,.5); 
+//// initialisiert Gewichte mit Werten zwischen 0 und 0.5
+
+  in_vec = new float [net->topo_data.in_count];
+  out_vec = new float [net->topo_data.out_count];
+}
+
+float train(Net *net,PatternSet *pat)
+//// trainiert Netz
+
+{
+  float error,tss; 
+  int p,i;
+
+  tss = 0.0;
+  for(p=0;p<pat->pattern_count;p++){
+    net->forward_pass(pat->input[p],out_vec);
+//// berechnet Ausgabe
+
+    for(i=0;i<net->topo_data.out_count;i++){
+      error = out_vec[i] = out_vec[i] - pat->target[p][i]; /* out_vec = dE/do = (o-t) */
+//// Ausgabe = Ausgabe - Zielausgabe
+
+      tss += error * error;
+//// Fehler = Summe der quadrierten Abweichungen
+
+    }
+    net->backward_pass(out_vec,in_vec);
+//// Fehler wird rueckpropagiert
+
+  }
+  net->update_weights(); 
+//// Gewichte werden angepasst
+
+  return(tss);
+}
+
+int main( int argc, char *argv[] )
+{
+  int n;
+  int nepochs;
+
+  pat1.load_pattern("n10");   
+//// laedt Muster
+  
+  create_net(&net1,pat1.input_count,HIDDEN_COUNT,pat1.target_count);
+//// ruft Funktion auf (s.o.)
+
+  printf("nepochs, uparams 0 1 2?\n");
+  scanf("%d %f %f %f",&nepochs,&uparams[0],&uparams[1],&uparams[2]);
+//// fragt Lernparameter und Anzahl der Lernzyklen ab
+
+  net1.set_update_f(RPROP,uparams);
+//// waehlt RPROP als Lernalgorithmus
+
+  for(n=0;n<nepochs;n++)
+    printf("%f\n",train(&net1,&pat1));
+//// trainiert Netz nepochs-mal
+
+  net1.save_net("expl2.net");
+//// speichert Netz ab
+
+}
+\end{verbatim}
+}
+
+\section{Oft ben\"otigte Hilfsfunktionen - aux.cc / aux.h}
+
+Die in {\em aux.cc} definierten Routinen sollen den Gebrauch
+von oftmals ben\"otigten Funktionen, wie sie das
+Trainieren und Testen von Mustermengen erfordern, erleichtern.
+
+{\bf Achtung:} Die Headerdatei {\em aux.h} mu"s immer nach {\em n++.h}
+und {\em PatternSet.h} eingebunden werden.
+
+\subsection{Hilfsprozeduren}
+
+Die Prozedur
+
+{\em  void aux\_trainAll(Net *net,PatternSet *pat,result\_type *result)}
+
+propagiert  alle in (\em pat} geladenen Muster durch das Netz {\em net},
+berechnet f\"ur jedes Muster den Fehler zwischen Ausgabe- und Zielwert,
+propagiert diesen zur\"uck. \"Uber den globalen Parameterrecord
+{\em aux\_params} kann dabei der update-Modus by pattern 
+({\em aux\_params.update\_mode} = ONLINE (1)) oder by epoch (... = OFFLINE (0))
+ausgew\"ahlt werden.
+Das Ergebnis des Trainings wird in einem record vom Typ {\em result\_type}
+(in {\em  aux.h}) zur\"uckgegeben. Dieser hat zwei Komponenten,
+einmal den Wert {\em tss}, die Summe des quadrierten Fehlers \"uber
+alle Ausgabeneuronen \"uber alle Muster, und {\em hamdis},
+die Anzahl der Fehlklassifikationen, ebenalls \"uber alle Muster und
+Ausgabeneuronen. Mit dem Parameter {\em aux\_params.tolerance} kann
+dabei die Toleranzgrenze f\"ur die noch korrekte Klassifikation angegeben
+werden (Fehler, falls $|t_i - o_i| >$ tolerance).
+
+Die Prozedur
+
+{\em void aux\_testAll(Net *net,PatternSet *pat,result\_type *result)}
+
+berechnet die Fehlerwerte wie obige Prozedur, f\"uhrt aber weder
+eine R\"uckpropagierung noch einen Gewichtsupdate durch. Mit
+ihr kann z.B. der Fehler auf einer Testmenge festgestellt werden.
+
+Die Prozedur
+
+{\em void aux\_testAllVerbose(Net *net,PatternSet *pat,result\_type *result)}
+
+gibt zus\"atzlich Eingabe-, Ausgabe- und Zielwerte aus.
+
+
+
+
+\end{document}
+
+
+
+
+

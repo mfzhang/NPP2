@@ -1,0 +1,34 @@
+This directory includes the following subdirectories:
+
+bin             executable files
+src             source code for n++ and PatternSet
+include         headerfiles to be included from application programms
+lib             object files to be linked to application programms
+doc             documentation (latex and doxygen files)
+demo_src        demo source code of applications
+examples        network descriptions and pattern sets
+build           build files (Xcode)
+npp2.xcodeproj  project file (Xcode 4.0)
+
+
+Building n++2 using cmake:
+
+Create a build-directory for storing configuration and temporary files:
+> mkdir build_cmake
+
+Change to directory:
+> cd build_cmake
+
+Configure cmake and create make files (also builds the demos):
+> cmake -DDEMOS=ON ..
+
+Build and install n++2:
+> make
+> make install
+
+
+Create API-documentation from sources:
+> make doc
+
+The documentation can be found in
+doc/api/html/

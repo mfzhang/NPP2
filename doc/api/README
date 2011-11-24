@@ -1,0 +1,1 @@
+Create the API-documentation by executing "doxygen" from the command line inside this directory. The level of detail of the produced documentation can be changed by editing the Doxyfile in this directory. 
