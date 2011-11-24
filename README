@@ -1,14 +1,64 @@
+N++2 is a multi-threaded neural network simulator for simulating large
+neural networks with millions of weights. During the training procedure,
+it makes heavy use of multi-core CPUs using several threads for propagating
+multiple training patterns in parallel. Relying on CBLAS calls where 
+appropriate, n++2 is also able to benefit of a CPU's SIMD-capabilities.
+
+N++2 is able to speed-up training of "simple" multi-layer perceptrons with 
+only one or two hidden layers and a few hundred connections. But it's main
+purpose is to simulate huge neural networks with a number of hidden layers
+and up to millions of weights in a "deep learning" setting. For this 
+purpose, n++2 offers additional facilities for constructing symmetric 
+autoencoder neural networks, easy layer-wise pre-training and for arranging
+neurons in two-dimensional layers (helpful for processing images). Besides
+fully connected layer types n++2 also comes with an implementation of sparse
+connection structures, including receptive fields and shared-weights. Thus,
+n++2 can also be used to simulate LeCun's convolutional neural networks and
+to combine these sparse techniques with deep learning and layer-wise 
+pretraining. 
+
+N++2 uses Martin Riedmiller's Resilient Propagation (RProp) for fast and 
+reliable training of the neural networks. N++2 builds on Riedmiller's 
+original (non-parallel) implementation n++ and uses mainly the same interface 
+(API) to the "simulator core", although the internal structure of the neural 
+networks in n++2 is different. On a dual quad-core CPU with two threads
+per core (16 threads in parallel) n++2 is about 27 times faster than the
+original n++.
+
+The latest (development) version of N++2 can be downloaded from GitHub:
+git clone https://github.com/salange/NPP2
+N++2 comes under the BSD licence. Feel free to use, modify and redistribute.
+For more information please visit us at our site 
+http://ml.informatik.uni-freiburg.de
+or contact us directly via Email: 
+Machine Learning Lab at University Freiburg: ml@informatik.uni-freiburg.de 
+Original developer and present maintainer: sascha77@googlemail.com
+
+The further development of n++2 will be an ongoing process open to the 
+public. We're open for any contributions and appreciate any help in improving
+the code, build-system and documentation. If interested to participate, 
+please don't hesitate to contact us!
+
+
 This directory includes the following subdirectories:
 
-bin             executable files
-src             source code for n++ and PatternSet
-include         headerfiles to be included from application programms
-lib             object files to be linked to application programms
-doc             documentation (latex and doxygen files)
+src             source code for n++2
+doc             documentation (latex and doxygen-generated files)
 demo_src        demo source code of applications
 examples        network descriptions and pattern sets
-build           build files (Xcode)
 npp2.xcodeproj  project file (Xcode 4.0)
+
+The following subdirectories will be created during the build procedure:
+
+include         headerfiles to be included from application programs
+lib             object files to be linked to application programs
+build           build files (Xcode)
+bin             executable files
+
+
+N++2 was tested on:
+- OS X Lion   (Xcode and cmake)
+- Ubuntu 10.04 LTS  (cmake)
 
 
 Building n++2 using cmake:

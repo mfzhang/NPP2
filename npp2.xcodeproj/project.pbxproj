@@ -81,6 +81,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9D189DBD147E5C3D00D77DF6 /* COPYING */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = COPYING; sourceTree = "<group>"; };
 		9D5B2B391198042C00D0E272 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		9D5B2B3C1198042C00D0E272 /* npp2.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = npp2.pdf; sourceTree = "<group>"; };
 		9D5B2B3D1198042C00D0E272 /* npp2.tex */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = npp2.tex; sourceTree = "<group>"; };
@@ -199,6 +200,7 @@
 		9D7A429B11723A3D009C8934 = {
 			isa = PBXGroup;
 			children = (
+				9D189DBD147E5C3D00D77DF6 /* COPYING */,
 				9DFD4D8A147424D100DD4E86 /* Accelerate.framework */,
 				9D78291E13B1E96600C7F06B /* Accelerate.framework */,
 				9DEE3F1B11980EA6009EA63E /* libnpp2.a */,
@@ -644,6 +646,7 @@
 				9DFD4D881474247000DD4E86 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
