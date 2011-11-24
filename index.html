@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+
+  <title>salange/NPP2 @ GitHub</title>
+
+  <style type="text/css">
+    body {
+      margin-top: 1.0em;
+      background-color: #f1a30e;
+      font-family: Helvetica, Arial, FreeSans, san-serif;
+      color: #000000;
+    }
+    #container {
+      margin: 0 auto;
+      width: 700px;
+    }
+    h1 { font-size: 3.8em; color: #0e5cf1; margin-bottom: 3px; }
+    h1 .small { font-size: 0.4em; }
+    h1 a { text-decoration: none }
+    h2 { font-size: 1.5em; color: #0e5cf1; }
+    h3 { text-align: center; color: #0e5cf1; }
+    a { color: #0e5cf1; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+    .download { float: right; }
+    pre { background: #000; color: #fff; padding: 15px;}
+    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+    .footer { text-align:center; padding-top:30px; font-style: italic; }
+  </style>
+</head>
+
+<body>
+  <a href="https://github.com/salange/NPP2"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+
+    <div class="download">
+      <a href="https://github.com/salange/NPP2/zipball/master">
+        <img border="0" width="90" src="https://github.com/images/modules/download/zip.png"></a>
+      <a href="https://github.com/salange/NPP2/tarball/master">
+        <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
+    </div>
+
+    <h1><a href="https://github.com/salange/NPP2">NPP2</a>
+      <span class="small">by <a href="https://github.com/salange">salange</a></span></h1>
+
+    <div class="description">
+      N++2: Multi-threaded neural network simulator in C++. Simulates deep autoencoder networks with millions of weights as well as traditional multi-layer perceptrons with only a few hundred weights.
+    </div>
+
+    
+      <p>N++2 is a multi-threaded neural network simulator for simulating large
+neural networks with millions of weights. During the training procedure,
+it makes heavy use of multi-core CPUs using several threads for propagating
+multiple training patterns in parallel. Relying on CBLAS calls where 
+appropriate, n++2 is also able to benefit of a CPU's SIMD-capabilities.
+
+N++2 is able to speed-up training of "simple" multi-layer perceptrons with 
+only one or two hidden layers and a few hundred connections. But it's main
+purpose is to simulate huge neural networks with a number of hidden layers
+and up to millions of weights in a "deep learning" setting. For this 
+purpose, n++2 offers additional facilities for constructing symmetric 
+autoencoder neural networks, easy layer-wise pre-training and for arranging
+neurons in two-dimensional layers (helpful for processing images). Besides
+fully connected layer types n++2 also comes with an implementation of sparse
+connection structures, including receptive fields and shared-weights. Thus,
+n++2 can also be used to simulate LeCun's convolutional neural networks and
+to combine these sparse techniques with deep learning and layer-wise 
+pretraining. 
+
+N++2 uses Martin Riedmiller's Resilient Propagation (RProp) for fast and 
+reliable training of the neural networks. N++2 builds on Riedmiller's 
+original (non-parallel) implementation n++ and uses mainly the same interface 
+(API) to the "simulator core", although the internal structure of the neural 
+networks in n++2 is different. On a dual quad-core CPU with two threads
+per core (16 threads in parallel) n++2 is about 27 times faster than the
+original n++.</p>
+    
+
+    
+      <h2>Dependencies</h2>
+      <p>POSIX Threads (pthread)
+CBLAS</p>
+    
+
+    
+      <h2>Install</h2>
+      <p>N++2 was tested on:
+- OS X Lion   (Xcode and cmake)
+- Ubuntu 10.04 LTS  (cmake)
+
+
+Building n++2 using cmake:
+
+Create a build-directory for storing configuration and temporary files:
+> mkdir build_cmake
+
+Change to directory:
+> cd build_cmake
+
+Configure cmake and create make files (also builds the demos):
+> cmake -DDEMOS=ON ..
+
+Build and install n++2:
+> make
+> make install
+
+
+Create API-documentation from sources:
+> make doc
+
+The documentation can be found in
+doc/api/html/
+</p>
+    
+
+    
+      <h2>License</h2>
+      <p> Copyright (c) 2009-2011, Sascha Lange <sascha77@googlemail.com>, 
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without 
+ modification, are permitted provided that the following conditions are met:
+ 
+ - Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+ 
+ - Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+ 
+ - Neither the name of Sascha Lange Software nor the names of its 
+   contributors may be used to endorse or promote products derived from this
+   software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ POSSIBILITY OF SUCH DAMAGE.</p>
+    
+
+    
+      <h2>Authors</h2>
+      <p>slange (sascha77@googlemail.com)<br/>      </p>
+    
+
+    
+      <h2>Contact</h2>
+      <p>Sascha Lange (sascha77@googlemail.com)<br/>      </p>
+    
+
+    <h2>Download</h2>
+    <p>
+      You can download this project in either
+      <a href="https://github.com/salange/NPP2/zipball/master">zip</a> or
+      <a href="https://github.com/salange/NPP2/tarball/master">tar formats.
+    </p>
+    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+      by running:
+      <pre>$ git clone git://github.com/salange/NPP2</pre>
+    </p>
+
+    <div class="footer">
+      get the source code on GitHub : <a href="https://github.com/salange/NPP2">salange/NPP2</a>
+    </div>
+
+  </div>
+
+</body>
+</html>
