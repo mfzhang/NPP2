@@ -57,7 +57,7 @@ MESSAGE( STATUS )
 
 ADD_LIBRARY(npp2 STATIC ${core_srcs} ${util_srcs} ${advanced_srcs} ${deep_srcs}) 
 
-INSTALL(FILES ${core_headers} ${util_headers} ${advanced_headers} ${deep_headers} DESTINATION include)
+INSTALL(FILES ${core_headers} ${util_headers} ${advanced_headers} ${deep_headers} DESTINATION include/NPP2)
 
 INSTALL(TARGETS npp2 
   RUNTIME DESTINATION bin
