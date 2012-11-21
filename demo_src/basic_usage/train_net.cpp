@@ -72,11 +72,10 @@ int main( int argc, char *argv[] )
     pattern.target_count            // size of target layer depends on the patern
   };
   Net net;
-  double param[3] = {               // RPROP parameters
-    0.1,                            // delta 0
-    0.8,                            // delta max
-    0.0                             // weight-decay
-  };
+  double param[MAX_PARAMS];               // RPROP parameters
+  param[0] = 0.1;                            // delta 0
+  param[1] = 0.8;                            // delta max
+  param[2] = 0.0;                             // weight-decay
   
   net.createLayers(4, &topology[0], numThreads); // create 4 "standard" layers
   net.setUpdateFunc(0, &param[0]);  // use RPROP
