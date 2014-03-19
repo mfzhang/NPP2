@@ -43,7 +43,7 @@
 #include "functions.h"
 #include "PatternSet.h"
 #if  (defined(__APPLE_CPP__) || defined(__APPLE_CC__) || defined(__MACOS_CLASSIC__))
-#include <veclib/cblas.h>
+#include <Accelerate/Accelerate.h>
 #else
 #include <cblas.h>
 #endif
