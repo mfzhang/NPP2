@@ -1,5 +1,5 @@
 #ifndef _DEEPAUTOENCODER_H_
-#define _DEPPAUTOENCODER_H_
+#define _DEEPAUTOENCODER_H_
 
 /*****************************************************************************
  
